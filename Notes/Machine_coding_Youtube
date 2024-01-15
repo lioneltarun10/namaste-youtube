@@ -112,3 +112,35 @@ We need to practice this many times , then only we can write the whole code fast
 Now let's build our buttonList.
 
 buttonlist is a collection of button components. let's create a button component.Use that button component many times in buttonlist component to show all the buttons.
+
+Now , it comes to videoContainer component.
+
+We have to ask Interviewer whether he wants us to take data from hard-coded data or from an API.
+
+Let's use youtube's live API for now.
+Youtube gives free API to use unlike swiggy. search "youtube video api" in google. And we will also not get CORS error this time because youtube is only providing us with the API directly.
+
+https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&regionCode=US&key=[YOUR_API_KEY]
+
+Where should I keep the API ? In constants file in utils.
+
+But this URL demands our API key , so we need to get our own API key.
+Search youtube api key auth in google. follow the steps to create credentials for API key.
+
+We got our API key and we have created the URL- 
+
+const GOOGLE_API_KEY = 'AIzaSyB-VjPRN5OVWqWDxjkx832Lm-X4_dY-G1I'
+
+export const YOUTUBE_VIDEOS_API = 
+"https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&regionCode=US&key=" +
+GOOGLE_API_KEY
+
+Now where will we make our API call? In videoContainer component using useEffect.
+
+we get below error , when we log the data from api , so go to below link and enable the youtube data API V3.
+
+"YouTube Data API v3 has not been used in project 718923284073 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/youtube.googleapis.com/overview?project=718923284073 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+
+
+
+
