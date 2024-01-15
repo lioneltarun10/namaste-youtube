@@ -1,0 +1,114 @@
+W will build youtube app and learn how to write code in machine coding rounds.
+
+First we need to know the requirement clarification.
+
+1) We need to discuss with the interviewer what features to develop.
+
+2) Discuss the tech stack
+- Tell the interviewer whether we use tailwind or not
+- whether use redux or not for data management
+- whether use javascript or typescript
+- react-router-dom for routing
+- what bundler we are using
+- React testing library for testing
+
+And with every tech stack give proper justification why we wan to use that tech stack.
+This gives impression that we know what we talk , that we speak like a senior developer , think like a senior developer.
+
+We spend 5 mins on this.
+
+(Interviewers allow google search most of the time , but practice such that we don't need to search anything.)
+
+3) Now create a plan , don't start coding immediately. Do low level design. 
+Design the web page in front of interviewer , so the interviewer will be on same page of our design. 
+
+Go deep into planning, discuss what will be in header, what will be in sidebar component , what will be in body component , what buttons will be in body component , what will be inside video container component , what will be inside videocard component , then on click of video card , what page it will go to , the URL of new page , the desgin of new page like header is also present ,watch video  component , video suggestion component , comment section component , etc.
+
+
+Now start coding.
+We will discuss with interviewer , that we can create the app from zero , installing bundler ,setting up the environment , but since we don;t have sufficient time , we can use create-react-app
+
+
+First install create-react-app package
+
+npm i -g create-react-app
+
+create-react-app is a javascript library which we execute like "npx create-react-app namaste-youtube"
+
+
+First setup the taiwind.
+npm i -D tailwindcss
+
+we don't need postcss package here , becaise create-react-app has taken care of that.
+
+now create a config file using - 
+npx tailwindcss init
+
+Now in config file , in content array , we give what files to apply the taiwind css.
+
+module.exports = {
+  content: ["./src/**/*.js"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+In app.css file , make changes as below - 
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+Developing header
+Till today we have used flex , for this time lets use grid.
+
+We have spent time on css here,
+But in machine coding interview we should not spend our time on CSS.
+But we should spend time on functionality like if we click on hamburger menu , our sidebar should collapse.
+
+We collapse the sidebar based on state cariable but where do we make this state?
+
+We make it in a global space because we have to use that state in both sidebar component and header component for hamburger menu.
+
+So best thing is to use Redux which is a state management library.
+
+npm i @reduxjs/toolkit
+npm i react-redux
+
+Next we create a store in utils folder.
+
+Create a store , create a slice as appSlice.
+Provide the store using a provider in app.js.
+
+Now in interview we need to check if store is properly setup or not.
+
+We can check through useSelector or the redux extension in chrome , where our state variables are shown
+
+Then next we need to dispatch the action from header component, when we click on hamburger menu.
+
+Now on clicking the hamburger , we see in redux extension that state of isMenuOpen has changed to false.
+
+Next , we need to subscribe our sidebar component to the appSlice of store , using useSelector.
+
+we need to subscribe to a specific part of the store.
+
+Then we put a condition like below - 
+
+ // Early return pattern
+  if(!isMenuOpen) return null;
+
+
+This type of code is known as Early return Pattern , where we check for a condition and return something if the conditin is met , else return the component code.
+
+Or else we can also use ternary operator for isMenuOpen
+
+Hence our functionality of toggling our sidebar menu is working.
+
+Interviewer will be impressed when we wrote our code in redux rather than satte variables because we are thinking in terms of large scale applications.
+
+We need to practice this many times , then only we can write the whole code fastly in front of interviewer.
+
+Now let's build our buttonList.
+
+buttonlist is a collection of button components. let's create a button component.Use that button component many times in buttonlist component to show all the buttons.
