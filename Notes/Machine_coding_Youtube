@@ -142,5 +142,125 @@ we get below error , when we log the data from api , so go to below link and ena
 "YouTube Data API v3 has not been used in project 718923284073 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/youtube.googleapis.com/overview?project=718923284073 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
 
 
+we got the API data successfully from youtube , we can verify by log to console.
+
+store the data in state variable.
+Now create VideoCard component for seperate videos and render that cards in VideoContainer component.
+
+We pass props to videocard.
+Remember!!! Always make it work for one , then scale it. Pass data for one video(by giving index [0] for the videos state variable) and check once if everthing is coming in videocard properly , then only apply map function on videos state and scale it to different cards.
+
+This way we can avoid a lot of error. Don't start directly by applying map to the videos list.
+
+We got our videocards coming properly in videocontainer, but we got onlt 5 videos.
+If we see in youtube api page ,we can give maxresults parameter in api url with values from 1 to 50 , in that way we can load more videos. So lets change url by adding "&maxResults=50"
+
+https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=50&regionCode=US&key=" + GOOGLE_API_KEY
+
+we got 50 videos!!.
+
+We can changes region of videos by givin 'IN' instead of 'US'
+https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=50&regionCode=IN&key=" + GOOGLE_API_KEY
+
+We got popular trending indian videos now.
+
+Now let's build the watchpage , on click on any video we should navigate to watchpage component.
+
+But first lets install react-router-dom and let's create our routing.
+
+npm i react-router-dom
+
+Now create a appRouter for our app using createBrowerRouter , and givi routing paths.
+
+Logic: We can see in real youtube page that , body remains same in all page's , when we click a video , sidebar collapses and MainContainer is replaced by watchPage component. 
+
+so let's keep watchPage component in body but we have to dynamically load component based on the url , if it is '/' , MainContainer should render , if we click on video , then MainContainer should not render but watchPage should render.
+
+For purposes like this , we have <Outlet /> component given by react-router-dom.
+
+const Body = () => {
+  return (
+    <div className='flex'>
+ 
+      <Sidebar />
+      <Outlet />
+    </div>
+  )
+}
+
+const appRouter = createBrowserRouter([
+  {
+    path: '/',
+    element: <Body />,
+    children:[
+         {
+        path:'/',
+        element:<MainContainer />
+      },
+      {
+        path:'watch',
+        element:<WatchPage />
+      }
+    ]
+  }
+])
+
+function App() {
+  return (
+    <Provider store={store}>
+   <div>
+      
+      <Head />
+      <RouterProvider router={appRouter} />
+ 
+      
+     
+
+How will be configure what will render in outlet component?
+Where will the children of body go in appRouter?It will go wherever our outlet component is present.
+
+Now our eatchpage is loading when we give /watch URL.
+
+Lets's make our videoCard clicked such that it goes to watch page.Let's build our URL exactly like youtube on clicking of video.
+
+<Link to={"/watch?v=" + video.id}> <VideoCard key={video.id} info={video}/></Link>
+
+Now when we go to watchpage , our sidebar should collapse , as original youtube watchpage, where will we do that? We do it in our watchpage using useEffect exactly once when we visit this component.
+
+Let's create another action in appSlice called closeMenu , so that it always closes the sidebar.
+We will not dispatch toggleMenu action in this case , because we don't want to open the sideBar , that's why we created a new action to always close the sidebar.
+
+
+Now let's read the ID that we have passed in watchpage URL.
+
+const params = useParams()
+console.log(params);  
+
+when we log our params , we get empty object , because these are search params , not the params sepearted by '/'.
+
+Instead of useParams , we have a useSearchParams hook which we can use.
+
+const [searchParams] = useSearchParams()
+console.log(searchParams); 
+
+Now when we consoled the searchParams , we got URLSearchParams which is a feature of Browser.
+We can get the videoID using searchParams.get("v") , because videoID is given for "v=" in the URL.
+
+console.log(searchParams.get("v")); 
+
+Now le us embed one video using IFrame.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/M03CXh1A2HE?si=CI9u0lJ7tfUM0vNA" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+
+
+Now this is for one video , let's make it dynamic by giving our videoID in src.
+
+<div className='px-5'>
+      <iframe 
+      width="800" 
+      height="400" 
+      src={"https://www.youtube.com/embed/" + searchParams.get("v")}
+      title="YouTube video player" 
+
 
 
