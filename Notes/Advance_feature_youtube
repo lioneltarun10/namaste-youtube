@@ -1,0 +1,396 @@
+Higher Order Components - 
+ A higher order component is a function which takes a component and returns a new component.
+
+ Why is it needed? Suppose we want a small modification for the videoCard component , then we use this higher order components.
+
+ Suppose we want to add a border for the videoCard , we can add it using HOC(hogher order component) and use it where ever we want.
+
+ Another Example is Ad of youtube , which is similar to the viceoCard, but it has different contents , this is also possible with HOC , which takes videoCard and add few features and when we use it , it is different to normal videocard.
+
+
+ Today for machine coding interview , we will develop searchBar , which is the most important feature or interview question for these kind of applications like youtube , swiggy , etc.
+
+ We can see in youtube that when we write something in searchbasr , it is making an API call on each and every key press.
+ Suppose we are searching for "flag" word , it is making api call for f , l , a and g. But first three api calls are waste for us. But this is not hte real case, now let's type some 10 words or more very quickly. What we found is that is just made 3 api calls. Similarly we can check flipkart website too , if we type some letters , we find that it is not making api call for every key press.
+
+This concept is known as debouncing. Very Important.
+
+When we are typing very fast , it just skips some of the events , skips some letters ,makes api calls after some letters.
+
+If we type the same thing slowly , it makes api calls for each and every key stroke.
+
+How is it able to do this? What is the concept?
+
+Debouncing : 
+
+Type slow -> suppose difference b/w key stroke is 200ms (high difference)
+
+type fast -> suppose difference b/w key stroke is 30ms(less difference)
+
+If we are typing fast , why do we need results for it? we don't need until we finish typing what we want. This small small things will have impact on our app performance.
+
+Does it hardly make a difference or make huge difference?
+
+Performance:
+- iphone pro max = 14 letters * (1000 persons) = 14000 api calls.
+- with debouncing = 3 api calls*1000 = 3000 api calls
+
+There's huge difference b/w 14000 and 3000 api calls.
+
+For lakhs of users , this makes huge huge difference.
+
+But why are we showing results without clicking on search? we can show result only once after we click search?
+
+This is because to give a better user experience. That's why showing results withour pressing search.
+
+Suppose in flipkart , debouncing is applied with 200ms , that means if difference b/w key stroke is less than 200ms - DECLINE API CALL
+
+For > 200ms , make API call.
+
+If we compare flipkart and youtube's debouncing, flipkart's debouncing is huge(example 200ms) compared to youtube (very less than 200ms).
+
+Why? Youtube wants to give much more better user experience. youtube will almost give results for every keystroke.
+
+Now let's take "youtube search suggestion api" which returns a json response.
+
+API -> http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=Query
+
+In place of Query , we give our search query like iphone , javascript tutorial , etc.
+
+Let's keep this API in constants file.
+
+Now to make our seach input box work , we need to bind it with a state variable.
+
+const [searchQuery,setSearchQuery] = useState("");
+
+<div className='col-span-10 px-10'>
+            <input
+            className='w-1/2 border border-gray-400 p-2 rounded-l-full'
+             type='text' 
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.vaue)}
+             />
+            <button className='border border-gray-400 px-5 py-2 rounded-r-full bg-gray-100'>🔍</button>
+        </div>
+
+Binding is done , but now we introduce debouncing. 
+
+Everything our search query changes , we make an API call. This can be done using useEffect with searchQuery as dependency. 
+
+useEffect(() => {
+    // API call
+    
+    console.log(searchQuery);
+},[searchQuery])
+
+This way we will make API call on every keystroke , but we want to make an API call only if difference b/w keystrokes is greater than 200ms.
+
+How do we do it?
+    make an API call after every key press
+    but if the difference between 2 API calls is <200ms 
+    decline the API call
+
+Implementing debouncing - 
+
+In JS , debouncing is a painful task , but doing it in react is ver very easy task.
+
+Lifecycle of debouncing
+/*
+*
+*key - i
+- render the component
+-useEffect() called
+start timer -> make API call after 200ms if not key pressed
+
+*key - ip (pressed before 200ms)
+- destroy the component(useEffect return method called, which clears before timer)
+*- render the component
+useEffect() called
+- new timer starts -> make API call after 200ms if not key pressed
+
+
+- In event loop(browser) ->
+on press of "i"
+setTimeout(200)
+when another key pressed before 200ms
+clearTimeout(previous timeout)
+new setTimeout(200)
+suppose 200ms has passed without pressing a key
+It make a API call
+*/
+
+
+useEffect(() => {
+    // make an API call after every key press
+    // but if the difference between 2 API calls is <200ms 
+    // decline the API call
+    const timer = setTimeout(() => getSearchSuggestions(),200)
+
+    return () => {
+        clearTimeout(timer)
+    }
+},[searchQuery])
+
+const getSearchSuggestions = async () => {
+        // API call
+        console.log(searchQuery);
+    const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
+
+    const json = await data.json()
+    // console.log(json[1]);
+
+}
+
+That's it , our debouncing is done.
+
+Now let's build the other parts of search similar to youtube.
+
+const [searchQuery,setSearchQuery] = useState("");
+  const [suggestions,setSuggestions] = useState([]);  
+  const [showSuggestions,setShowSuggestions] = useState(false);
+
+          <div className='col-span-10 px-10'>
+            <div>
+            <input
+            className='px-5 w-1/2 border border-gray-400 p-2 rounded-l-full'
+             type='text' 
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             onFocus={() => setShowSuggestions(true)}
+             onBlur={() => setShowSuggestions(false)}
+             />
+            <button className='border border-gray-400 px-5 py-2 rounded-r-full bg-gray-100'>🔍</button>
+            </div>
+            {showSuggestions && 
+            (<div className='fixed bg-white py-2 px-2 w-[27rem] shadow-lg rounded-lg border border-gray-200'>
+             <ul>
+                {suggestions.map((s) =>
+                 (
+                <li key={s} className='py-2 px-3 m-1 shadow-sm hover:bg-gray-100'>🔍 {s}</li>)
+                 )
+                 }
+
+             </ul>
+            </div>
+              )}
+        </div>
+
+ we have built our search suggestions.
+ Now lets make our search more close to youtube search.
+
+In youtube , when u=you search something it makes api call , but if you search the same thing again , it doesn't make api call but only show suggestions, because it is caching the results.
+
+We can make this using the power of redux store , where we will store our search results.
+
+Let's create a new slice for search results in appstore.
+
+For initialState in slice , we need to give some format of data.Here's the part where data structures come, where we need to dscide in which data structure to keep the results to reduce time complexity. 
+
+Cache:
+[i,ip,iph,iphone]
+time complexity to search in array = O(n)
+{
+    i:
+    ip:
+    iph:
+    iphone:
+}
+time complexity to search in Object = O(1)
+
+There's a class called Map ,which is more optimized that searching in a object , but for sake of simplicity let's use object for now.
+
+This object is also known as HashMap in other language data structures.
+
+import { createSlice } from "@reduxjs/toolkit";
+
+const searchSlice = createSlice({
+    name: 'search',
+    initialState:{
+
+    },
+    reducers:{
+        cacheResults:(state,action) => {
+            state = {...action.payload,...state}
+        }
+    }
+})
+
+export const {cacheResults} = searchSlice.actions
+
+export default searchSlice.reducer;
+
+
+
+const store = configureStore({
+   reducer:{
+    app: appSlice,
+    search:searchSlice,
+   },
+})
+
+
+Now we need to write logic so that when user searches for something , first we need to see if it is present in cache , if present gice results from cache or else make an API call.
+
+To give results from cache , we need to subscribe to the store.
+
+Also , if we don't find the searchQuery in cache , when we make an API call , we also need to store the API results in cache by dispatching an action.
+
+const searchCache = useSelector((store) => store.search);
+  const dispatch = useDispatch();
+/*
+searchCache = {
+    "iphone":["iphone 11","iphone 12"]
+}
+ 
+searchQuery = iphone
+*/ 
+
+useEffect(() => {
+    // make an API call after every key press
+    // but if the difference between 2 API calls is <200ms 
+    // decline the API call
+    const timer = setTimeout(() => {
+        if(searchCache[searchQuery]){
+            setSuggestions(searchCache[searchQuery]);
+       
+        }else{
+        
+            getSearchSuggestions()
+        
+        }
+
+        
+    },200)
+
+    return () => {
+        clearTimeout(timer)
+    }
+},[searchQuery])
+
+
+const getSearchSuggestions = async () => {
+        // API call
+        console.log("API CALL - " + searchQuery);
+    const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
+
+    const json = await data.json()
+    // console.log(json[1]);
+    setSuggestions(json[1]);
+
+    // update cache
+    dispatch(cacheResults({
+        [searchQuery] : json[1]
+    }))
+
+}
+
+This is a well organised , well optimized search.
+This search is very very good.
+
+Idea -> LRU cache - Least Recently Used
+
+We can restrict our cache to store only 100 search results , after reaching 100 , we can keep removing the results from our cache based on "Least recently Used". We can implement this too.
+This helps in keeping only finite amount of searchResults to reduce storage issues and optimization.
+
+Now , let's develop comments section.
+
+Comments is just 2 level nested - one is a new comment , another is a reply to that comment.
+
+This is a very important interview question.
+
+We will develop a n-level deep comment section.
+
+This type of n-level nested comments are available in reddit website.
+
+This requires UI , Data strucures(recursion) knowledge.
+
+Youtube has just 2-level nested comments , that is , one writes a comment , other replies to that comment(2nd level ) , but no one can reply to that 2nd level comment , they just mention their name by "@" to specify that their comment is a reply to that person. (see comments in youtube , you will understand)
+
+So , we have watch page , an iframe inside it , we want comments below that iframe.
+
+const CommentsContainer = () => {
+  return (
+    <div className='m-5 p-2'>
+        <h1 className='text-2xl font-bold'>Comments:</h1>
+    </div>
+  )
+}
+
+How will our comments data look like?
+
+It can be n-level deep , we can have comments as a list in an array with each object representing a comment , and that comment can have replies which is again a arraylist with each object inside it is a reply , and this goes on till n-level.
+
+const commentsData = [
+    {
+        name: "akshay saini",
+        text:"lorem ipsum",
+        replies:[
+            {
+                name: "tarun",
+                text:"lorem ipsum",
+                replies:[
+                    {
+                        name: "akshay saini",
+                        text:"lorem ipsum",
+                        replies:[
+                            {
+                                name: "tarun",
+                                text:"lorem ipsum",
+                                replies:[
+                                    {
+                                        
+                                    }
+                                ]
+                            },
+                        ]
+                    },
+                ]
+            },
+            {
+                name: "tarun",
+                text:"lorem ipsum",
+                replies:[
+                    {
+                        
+                    }
+                ]
+            },
+        ]
+    },
+    
+]
+
+
+We have created one comment in this way - 
+
+const Comment = ({data}) => {
+
+    const {name,text,replies} = data
+
+    return <div className='flex shadow-sm bg-gray-100 p-2 rounded-lg'>
+        <img 
+        className='w-12 h-12'
+        alt='user' 
+        src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfVZyKFiUD2ZNuNdvK81INhRz6jGwXeerSO0FXlAhHQQ&s' 
+        />
+       <div className='px-3'>
+        <p className='font-bold'>{name}</p>
+        <p>{text}</p>
+       </div>
+
+    </div>
+}
+
+const CommentsContainer = () => {
+  return (
+    <div className='m-5 p-2'>
+        <h1 className='text-2xl font-bold'>Comments:</h1>
+        <Comment data={commentsData[0]}/>
+    </div>
+  )
+}
+
+export default CommentsContainer
+
+
+But what about replies? we will use recursion for the replies.
