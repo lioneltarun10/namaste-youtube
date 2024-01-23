@@ -1,0 +1,290 @@
+Live Chat >>>>>> Infinite scroll >>>> Pagination
+
+Challeges of Live Chat - 
+- get data live (data layer)
+- update the UI in a efficient way, also give better experience to the User. (UI layer)
+
+Data(Live) - 
+
+There are 2 ways to handle live data - 
+- Web Sockets - it is a 2 way connection ,where we can get or send data quickly from either sides. No regular interval. Initial connection takes time.
+EXAMPLE - TRADING APPS . whatsapp (all these are real time)
+
+- API polling - data is uni-directionl .UI request the server , server sends data to UI (one-directional). In regular intervals , UI will check if any data sent by server and this is known as polling(searching in regular interval's if data sent by Server)
+example - GMAIL , OUTLOOK (we can check(polling) for data every 10 sec)
+
+In a live chat application , we always need web-sockets , not API polling.
+
+These things are very important for system design round.
+
+Cricbuzz is API polling , where it polls data in regular intervals to update the scores of matches.
+
+Commentary for soccer? Idea -> We can still do API polling having less interval , because commentary needs to be written in that interval.
+
+Comments of youtube -> It uses API polling, we can observe this in network tab.
+
+Code is easiest part of building an application once we understand the concepts.
+
+We can see in network in youtube live , with waterfall feature of network , that difference b/w two API call's is almost nearly 1.5 sec. It's not real time , youtube also doesn't show timestamp of chat , also the order of messages shown in the chat is not the real order.
+
+We have talked about data layer , let's talk about UI layer.
+
+If we keep up pushing things in the DOM , we will explode our DOM , how do we add all the live chat to our DOM without performance issues or exploding the DOM , afterall each chat we are adding is nothing but a div element in HTML.
+
+Youtube smarlty deletes message after certain number of buffer , that is , it keeps a buffer of example 200 messages , so after 200 messages it keeps deleteing the messages from the top!! In this way it keeps the website smooth and running without any performance hit.
+
+How many number of messages are in live chat? we can check that by going to elements tab in inspect element, select the tag of the live chat messages , then we can use document.getElementsByTagName on that tag , and find the length  , that way we can findout the maximum number of messages are are displaying in chat at any pint of time.
+
+So now we have sufficient knowledge to discuss with the interviewer about implementing API polling or Web socket for our live chat feature.
+
+Let's start coding for our feature.
+
+Always while developing , develop one component , don't directly start writing map.
+
+Let's create LiveChat component and also ChatMessage component for one message in that chat and display the LiveChat component in watchpage component.
+
+ <iframe 
+          width="800" 
+          height="400" 
+          src={"https://www.youtube.com/embed/" + searchParams.get("v")}
+          title="YouTube video player" 
+          frameBorder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+          allowFullScreen>
+
+          </iframe>
+          </div>
+          <div className='w-full'>
+            <LiveChat />
+          </div>
+
+
+
+import React from 'react'
+import ChatMessage from './ChatMessage'
+
+const LiveChat = () => {
+  return (
+    <div className='w-full h-[400px] ml-2 p-2 border border-black bg-slate-100 rounded-lg'>
+        <ChatMessage name="Unnam Tarun" message="This ia Namaste React Live!!"/>
+        <ChatMessage name="Unnam Tarun" message="This ia Namaste React Live!!"/>
+        <ChatMessage name="Unnam Tarun" message="This ia Namaste React Live!!"/>
+        <ChatMessage name="Unnam Tarun" message="This ia Namaste React Live!!"/>
+        </div>
+  )
+}
+
+export default LiveChat          
+
+
+
+import React from 'react'
+
+const ChatMessage = ({name,message}) => {
+  return (
+    <div className='flex items-center shadow-sm p-2' >
+        <img 
+        id="img" 
+        draggable="false" 
+        class="style-scope yt-img-shadow" 
+        alt="" height="24" 
+        width="24" 
+        src="https://yt4.ggpht.com/ytc/AIf8zZTiEI0G-dAgmZ83pO6kp4IfmiAuQk-Sk3qIyblZRDZWd4TBzivmqyPaTQm5sYAK=s64-c-k-c0x00ffffff-no-rj"
+        />
+        <span className='font-bold px-2'>{name}</span>
+        <span>{message}</span>
+        
+    </div>
+  )
+}
+
+export default ChatMessage
+
+
+
+Now , we need some data for live chat to display.
+
+How to do API polling? 
+we will use useEffect , and use setInterval method.
+
+ useEffect(() =>{
+     const i = setInterval(() => {
+        //API polling
+        console.log("API polling");
+     }, 2000);
+
+     return () => clearInterval(i);
+     
+  },[])
+
+
+  So , we will get data , but where do we store this data? Let's use the power of redux.
+
+  Let's build chatSlice.
+
+  import { createSlice } from "@reduxjs/toolkit";
+
+const chatSlice = createSlice({
+    name:"chat",
+    initialState:{
+        messages:[]
+    },
+    reducers:{
+        addMessage:(state,action) => {
+            state.messages.push(action.payload)
+        }
+    }
+})
+
+export const {addMessage} = chatSlice.actions
+export default chatSlice.reducer
+
+
+
+const store = configureStore({
+   reducer:{
+    app: appSlice,
+    search:searchSlice,
+    chat: chatSlice,
+   },
+})
+
+
+Now let's dispatch an action to addMessage to chatSlice. Also we will use useSelector to subscribe to the chatSlice to retrive chat messages from the chatSlice.
+
+We also used random name generator and random message generator in helper.js file , to make it look like different persons are messaging on the live stream.
+
+const LiveChat = () => {
+
+const dispatch = useDispatch()
+
+const chatMessages = useSelector((store) => store.chat.messages)
+
+  useEffect(() =>{
+     const i = setInterval(() => {
+        //API polling
+        console.log("API polling");
+
+        dispatch(addMessage({
+            name:generateRandomName(),
+            message:makeRandomMessage(20) + "🚀"
+        }))
+     }, 2000);
+
+     return () => clearInterval(i);
+     
+  },[])
+
+
+  return (
+    <div className='w-full h-[400px] ml-2 p-2 border border-black bg-slate-100 rounded-lg overflow-y-scroll'>
+        
+        {// DISCLAIMER: Don't use indexes as keys
+            chatMessages.map((c,i) => (
+            <ChatMessage key={i} name={c.name} message={c.message} />
+                
+            ))
+        }
+        
+        </div>
+  )
+}
+
+export default LiveChat
+
+
+
+That's it , our live stream is good enough.
+Now let's handle more UI.
+
+In youtube live stream , we can see that messages are going from bottom to top , in ours it's going from top to bottom. Let's reverse it in our stream.
+
+<div className='w-full h-[400px] ml-2 p-2 border border-black bg-slate-100 rounded-lg overflow-y-scroll flex flex-col-reverse'>
+
+we used flex flex-col-reverse to make the order of messages from bottom-to-top. But we can see that new messages are adding at top instead of coming before the old message. This we can handle by the way the messages are stored in chatSlice. Instead of push , we can use unshift , which will store our messages to the start of the messages array in state.
+
+addMessage:(state,action) => {
+            state.messages.unshift(action.payload)
+        }
+
+But after sometime , our page will crash.  
+We have to smartly optimize it.
+we will remove the old messages , by just eeping the latest 200 or 300 messages.
+
+addMessage:(state,action) => {
+                
+            state.messages.splice(LIVE_CHAT_COUNT,1)
+            state.messages.unshift(action.payload)
+        }
+
+Here , we have given LIVE_CHAT_COUNT constant , which we can configure according to if it is a mobile or laptop or TV.
+
+Usinf splice , we  are ensurin to remove a message after the LIVE_CHAT_COUNT number of messages in the messages array.
+
+
+It took very less time to code this.We need to understand the concepts and logic to build this fast.
+
+
+Now let's build feature to add chat form the webpage itself by the user.
+
+ <div className='w-full p-2 ml-2 border border-black'>
+       <input 
+        className='w-80'
+       type='text'/>
+       <button className='mx-3 px-2 bg-green-100'>Send</button>
+    </div>
+
+
+    Now let's create a state variable and bind our input box to that variable.
+
+    <input 
+        className='px-2 w-80'
+       type='text'
+       value={liveMessage}
+       onChange={(e) => setLiveMessage(e.target.value)}
+       />
+
+
+    But we need to click on send button to send our message to some server or something , how to do that?
+
+    We need to create a form for that.
+
+    Now we can see that on click of send , we submitted our text but our page refreshed. We can stop this default behaviour by using preventDeafault of our event. 
+
+    <form className='w-full p-2 ml-2 border border-black' onSubmit={(e) =>{
+      e.preventDefault()
+      console.log("ON form Submit ", liveMessage);
+     }}>
+       <input 
+        className='px-2 w-80'
+       type='text'
+       value={liveMessage}
+       onChange={(e) => setLiveMessage(e.target.value)}
+       />
+       <button className='mx-3 px-2 bg-green-100'>Send</button>
+    </form>
+
+    Now, how to store our message which is being sent from here? We need to dispatch an action to update the slice of our store.
+
+    <form className='w-full p-2 ml-2 border border-black' onSubmit={(e) =>{
+      e.preventDefault()
+      //console.log("ON form Submit ", liveMessage);
+      dispatch(addMessage({
+        name:"Tarun",
+        message:liveMessage
+      }))
+     }}>
+       <input 
+        className='px-2 w-80'
+       type='text'
+       value={liveMessage}
+       onChange={(e) => setLiveMessage(e.target.value)}
+       />
+       <button className='mx-3 px-2 bg-green-100'>Send</button>
+    </form>
+
+
+    This is highly performing live chat , it will never explode.
+
+    This is the power of react and redux.
+
