@@ -1,0 +1,204 @@
+We will learn about some extra hooks in here.
+
+useMemo hook
+
+useMemo is a React Hook that lets you cache the result of a calculation between re-renders.
+
+When does re-render happen? When there's a state change.
+Why do we want to cache a result? Because to get that result , it might be an expensive operation , and we don't want to do that expensive operation again when we re-render.
+
+But React already optimizes our app , in which way can we optimize our app using useMemo? Lets see
+
+We created the component Demo , to see the effect of useDemo.And in that we put a input box with value assigned to state variable 'text'.
+
+ <input
+            className='border border-black w-72 px-2' 
+            type='number' 
+            value={text} 
+            onChange={(e) => setText(e.target.value)} 
+            />
+
+Now when we type something in input box , the state is changing , the component is re-rendering. we can see that thought the console.log that we put in demo component.      
+
+IF we put a heavy operation there , everytime our state changes , the heavy operation will happen. We can memoize the heavy operation , that means cache the heavy operation , so that we don't have to do it again and again.
+
+To check this heavy operation effect , we have put a find nth prime number, and whatever is inputted in text box , we will calculate that nth prime number.
+You can clearly see that after 5 - 6 digits our page is handing , because it's taking that much time to calculate the nth prime.
+
+ const [text,setText] = useState(0);
+
+    console.log("Rendering...");
+    // heavy operation
+
+    const prime = findPrime(text);
+
+  return (
+    <div className='m-4 p-2 w-96 h-96 border border-black'>
+        
+        <div>
+            <input
+            className='border border-black w-72 px-2' 
+            type='number' 
+            value={text} 
+            onChange={(e) => setText(e.target.value)} 
+            />
+        </div>
+
+        <div>
+            <h1 className='mt-4 font-bold text-xl'>nth Prime : {prime}</h1>
+        </div>
+
+
+
+    </div>
+
+
+    Nothing is working whe our page is frozen , not even refrwsh is working , search is working , etc.
+
+    Let's build a dark and light them inside the box.Let's create a button to toggle this.
+
+    Whenever I'm toggling , the component is re-rendering. Suppose you input 123 in input box , some result is produced , but you click on toggle , then component is re-rendering and again for 123 , the prime is getting calculated.
+
+    Is it requrired? Not required!!
+
+        const prime = () =>{
+        console.log("Calculate prime Number of ",text);
+        return findPrime(text);
+    } 
+
+    We can see the console printing the "Calculate prime Number...." everytime we are chaning the theme of our demo component.
+
+    Wherever there's a state change , react will re-render the whole component , and everthing in the component is done again.
+
+    When we are doing simple operation's , react is very fast, but when we are doing heavy operation , it is freezing the whole page , such type of issues can be handled using "memoization".
+
+    useMemo : useMemo is a React Hook that lets you cache the result of a calculation between re-renders.
+
+    const prime = useMemo(() =>  findPrime(text),[text])
+
+    React will re-render the whole component anytime a state or prop changes. because of one state variable , we are calling the heavy operation , that's why we will memoize the heavy operation.
+
+    The component will render , but since we used memoize the heavy operation is not called until the dependency of useMemo is changed.
+
+    useCallback
+    useCallback is a React Hook that lets you cache a function definition between re-renders
+
+    In useMemo , we are caching the result returned by findPrime function , in useCallback we will cache the function definition itself.
+
+    explore this useCallback yourself from react docs.
+
+    useRef:useRef is a React Hook that lets you reference a value that’s not needed for rendering.
+
+    Suppose if you want to store some value in a variable in your compoennt , so that the variable in not needed for re-rendering.
+
+    const v = 10;
+
+    we will us this variable in some place , and also we want to change the value of v.
+    But to cahnge value of v , we need to use useState , but using useState it will re-render the whole component again.
+    Then how to change value of v without re-rendering?
+
+    Let's create new component deom2 to understand by an example.
+
+    const Demo2 = () => {
+  
+  let x = 10;
+  
+    return (
+    <div className='m-4 p-2 bg-slate-50 border border-black w-96 h-96'>
+       <div>
+        <button onClick={()=>{
+            x = x+1
+            console.log(x)
+        }} className='bg-green-100 p-2 m-4'>Increase x</button>
+        <span className='font-bold text-xl'>Let = {x}</span>
+        
+       </div>
+    </div>
+  )
+}
+
+In this code , when we clcik on increase x button , it increases x , but it will not re-render the page.
+No way I can update this on the UI.
+
+<div>
+        <button onClick={()=>{
+            setY(y+1)
+            console.log(y)
+        }} className='bg-green-100 p-2 m-4'>Increase y</button>
+        <span className='font-bold text-xl'>State = {y}</span>
+        
+</div>
+
+When we use useState for y variable , then when we click on increae y , then it shows the increased value on UI. But observe something very important!!! That is , when we click on increase y , the variable x is reset to 10 again even though we have clicked on it many times before .
+
+This is because at the end of the day , component is nothing but a function and when it is called again , a whole new Execution context is created ,all variables are created in memory again. React is nothing but JS. 
+
+So if your JS basics are strong , you can answer any question in React.
+
+useRef : useRef is a React Hook that lets you reference a value that’s not needed for rendering.
+
+In previous example you have seen that when we change state variable , the whole component re-renders and the let variable is reset to initial value again. But you don't want it to reset to initial value , but to retain it's value how many number of times it was increased, this is where useRef will come into picture.
+
+We want the value of let variable to persist between the re-render's . 
+
+const ref = useRef(0);
+  console.log(ref);
+
+  ref is not like a variable 
+  ref = 0 this is not the case
+  ref is an object with current = 0
+  ref = { 
+    current : 0
+  }
+
+  We can see that on increasing ref , it is not shown in UI that it's icnreasing , but it is increasing and when we increase state variable , the component re-renders and the value of ref is persistent from previous render and this time the current value of ref is shown on UI. 
+
+  use case of useRef:
+
+  useEffect(()=>{
+   const i = setInterval(()=>{
+       console.log("Namaste React ",Math.random());
+   },1000)
+
+   return () => clearInterval(i)
+},[])
+
+Suppose we are using useEffect with a setInterval , you know that when we change the page , the setInterval is garbage collected because we have put a return function which will clear the interval.
+
+Suppse you don't want the setInterval to clear the interval from useEffect return function , but from a button on clicking which you should clearInterval , no matter if you change page or not , the interval should keep running until click of stop interval button.
+
+<button 
+       onClick={()=>{
+        clearInterval(i)
+       }}
+       className='bg-red-900 p-2 m-4 text-white font-bold rounded-lg '>Stop Printing</button>
+
+but scope of i is limited to useEffect. So we can't do that.
+
+For suppose you use let i = null in global scope of this function , try to do this.
+
+let i = null;
+useEffect(()=>{
+    i = setInterval(()=>{
+       console.log("Namaste React ",Math.random());
+   },1000)
+
+   return () => clearInterval(i)
+},[])
+
+On click of stop printing , it will stop the timer.
+
+But when we change the state variable , the variable i does not persists.we don't have access to the timer now , because i is reset to null and since useEffect will run only once when component is mounted , so i is not referencing the timer now.  Using let is not a good way.
+
+warning shown by vscode editor : Assignments to the 'i' variable from inside React Hook useEffect will be lost after each render. To preserve the value over time, store it in a useRef Hook and keep the mutable value in the '.current' property. Otherwise, you can move this variable directly inside useEffect.
+
+const i = useRef(null);
+
+useEffect(()=>{
+    if(i.current) return;
+    i.current = setInterval(()=>{
+       console.log("Namaste React ",Math.random());
+   },1000)
+
+   
+},[])
